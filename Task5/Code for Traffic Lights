@@ -1,0 +1,99 @@
+const int greenLight = 2;
+const int yellowLight = 3;
+const int redLight = 4;
+const int pedRed = 5;
+const int pedGreen = 6;
+
+enum TrafficState { GREEN, YELLOW, RED, PEDESTRIAN, RESET };
+TrafficState currentState = GREEN;
+
+bool pedestrianRequest = false;
+unsigned long stateStartTime = 0;
+unsigned long greenDuration = 10000;  // Default green light duration
+const unsigned long PEDESTRIAN_GREEN_DURATION = 5000; //ms
+const unsigned long YELLOW_DURATION = 3000;          
+const unsigned long PEDESTRIAN_WAIT_DURATION = 1000; 
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(greenLight, OUTPUT);
+  pinMode(yellowLight, OUTPUT);
+  pinMode(redLight, OUTPUT);
+  pinMode(pedRed, OUTPUT);
+  pinMode(pedGreen, OUTPUT);
+
+  // Start with green light and pedestrian red
+  digitalWrite(greenLight, HIGH);
+  digitalWrite(pedRed, HIGH);
+  stateStartTime = millis();
+}
+
+void loop() {
+  // Check for pedestrian request via serial input
+  if (Serial.available() > 0) {
+    char signal = Serial.read();
+    if (signal == '1') {
+      pedestrianRequest = true;
+      // Adjust green duration to extend by 3 seconds from the moment of button press
+      unsigned long currentTime = millis();
+      if (currentTime - stateStartTime < greenDuration - 3000) {
+        greenDuration = (currentTime - stateStartTime) + 3000;
+      }
+    }
+  }
+
+  unsigned long currentTime = millis();
+
+  switch (currentState) {
+    case GREEN:
+      if (currentTime - stateStartTime >= greenDuration) {
+        currentState = YELLOW;
+        stateStartTime = currentTime;
+      }
+      break;
+
+    case YELLOW:
+      digitalWrite(greenLight, LOW);
+      digitalWrite(yellowLight, HIGH);
+      if (currentTime - stateStartTime >= YELLOW_DURATION) {
+        digitalWrite(yellowLight, LOW);
+        digitalWrite(redLight, HIGH);
+        currentState = RED;
+        stateStartTime = currentTime;
+      }
+      break;
+
+    case RED:
+      // Handle pedestrian request in RED state
+      if (pedestrianRequest) {
+        if (currentTime - stateStartTime >= PEDESTRIAN_WAIT_DURATION) {
+          digitalWrite(pedRed, LOW);
+          digitalWrite(pedGreen, HIGH);
+          currentState = PEDESTRIAN;
+          stateStartTime = currentTime;
+        }
+      } else {
+        currentState = RESET;
+        stateStartTime = currentTime;
+      }
+      break;
+
+    case PEDESTRIAN:
+      if (currentTime - stateStartTime >= PEDESTRIAN_GREEN_DURATION) {
+        digitalWrite(pedGreen, LOW);
+        digitalWrite(pedRed, HIGH);
+        pedestrianRequest = false; // Reset pedestrian request
+        currentState = RESET;
+        stateStartTime = currentTime;
+      }
+      break;
+
+    case RESET:
+      digitalWrite(redLight, LOW);
+      digitalWrite(greenLight, HIGH);
+      greenDuration = 10000; // Reset green duration to default timing
+      currentState = GREEN;
+      stateStartTime = currentTime;
+      break;
+  }
+}
