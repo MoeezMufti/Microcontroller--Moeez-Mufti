@@ -1,0 +1,16 @@
+const int buttonPin = 7;
+int buttonState = 0;
+
+void setup() {
+  Serial.begin(9600); // Start serial communication
+  pinMode(buttonPin, INPUT_PULLUP); // Use internal pull-up resistor for the button
+}
+
+void loop() {
+  buttonState = digitalRead(buttonPin);
+
+  if (buttonState == LOW) { // if Button is pressed
+    Serial.println(1); // Send signal "1" to the Slave to communicate
+    delay(500); // Debounce delay
+  }
+}
