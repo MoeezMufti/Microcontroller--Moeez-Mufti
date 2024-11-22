@@ -1,0 +1,79 @@
+// Pin definitions
+const int greenLight = 2;
+const int yellowLight = 3;
+const int redLight = 4;
+const int pedRed = 5;
+const int pedGreen = 6;
+const int button = 7;
+
+// State definitions
+enum TrafficState { GREEN, YELLOW, RED, RESET };
+TrafficState currentState = GREEN;
+
+//setting timer to zero for initi setup and button to false
+unsigned long greenTimer = 0;
+bool buttonPressed = false;
+
+void setup() {
+  // Set pin AND modes
+  pinMode(greenLight, OUTPUT);
+  pinMode(yellowLight, OUTPUT);
+  pinMode(redLight, OUTPUT);
+  pinMode(pedRed, OUTPUT);
+  pinMode(pedGreen, OUTPUT);
+  pinMode(button, INPUT_PULLUP);
+  
+  // Always start and loop back to Green
+  digitalWrite(greenLight, HIGH);
+  digitalWrite(pedRed, HIGH);
+  greenTimer = millis();
+}
+
+void loop() {
+  // Check whether or not the button is pressed
+  if (digitalRead(button) == LOW) {
+    buttonPressed = true;
+  }
+
+  // State machine for traffic light control
+  switch (currentState) {
+    case GREEN:
+      // Stay in GREEN state until 10 seconds pass or button is pressed
+      if ((buttonPressed && digitalRead(greenLight) == HIGH) || 
+          (millis() - greenTimer >= 10000)) {
+        if (buttonPressed) {
+          delay(3000);  // Green light will stay on for 3s after button press
+        }
+        currentState = YELLOW;
+      }
+      break;
+
+    case YELLOW:
+      digitalWrite(greenLight, LOW);
+      digitalWrite(yellowLight, HIGH);
+      delay(2000);
+      digitalWrite(yellowLight, LOW);
+      currentState = RED;
+      break;
+
+    case RED:
+      // Red light and pedestrian crossing sequence
+      digitalWrite(redLight, HIGH);
+      digitalWrite(pedRed, LOW);
+      digitalWrite(pedGreen, HIGH);
+      delay(5000);
+      currentState = RESET;
+      break;
+
+    case RESET:
+      // Reset to initial state
+      digitalWrite(pedGreen, LOW);
+      digitalWrite(pedRed, HIGH);
+      digitalWrite(redLight, LOW);
+      digitalWrite(greenLight, HIGH);
+      buttonPressed = false;
+      greenTimer = millis();
+      currentState = GREEN;
+      break;
+  }
+}
