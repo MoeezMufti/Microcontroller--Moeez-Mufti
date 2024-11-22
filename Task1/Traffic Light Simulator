@@ -1,5 +1,3 @@
-#include <Wire.h>
-
 // Pin delegations
 const int greenLight = 2;
 const int yellowLight = 3;
@@ -11,7 +9,7 @@ TrafficState currentState = Green;
 
 /*setting durations as constant so that they 
 don't change with with other condition*/
-unsigned long previousMillis = 0;
+unsigned long previousMs = 0;
 const unsigned long greenDuration = 10000; //in ms
 const unsigned long yellowDuration = 3000; 
 const unsigned long redDuration = 5000;    
@@ -24,41 +22,41 @@ void setup() {
   
   // System always comes back to Green Light 
   digitalWrite(greenLight, HIGH);
-  previousMillis = millis(); //tells how much ms has passed since beginning
+  previousMs = millis(); //tells how much ms has passed since beginning
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
+  unsigned long currentMs = millis();
 
   switch (currentState) {
     case Green:
       // Green light is on for 10s
-      if (currentMillis - previousMillis >= greenDuration) {
+      if (currentMs - previousMs >= greenDuration) {
         //how much time has passed from beginning to current
         digitalWrite(greenLight, LOW);
         digitalWrite(yellowLight, HIGH);
         currentState = Yellow;
-        previousMillis = currentMillis;
+        previousMs = currentMs;
       }
       break;
 
     case Yellow:
       // Yellow light is on for 3s
-      if (currentMillis - previousMillis >= yellowDuration) {
+      if (currentMs - previousMs >= yellowDuration) {
         digitalWrite(yellowLight, LOW);
         digitalWrite(redLight, HIGH);
         currentState = Red;
-        previousMillis = currentMillis;
+        previousMs = currentMs;
       }
       break;
 
     case Red:
       // Red light is on for 5s
-      if (currentMillis - previousMillis >= redDuration) {
+      if (currentMs - previousMs >= redDuration) {
         digitalWrite(redLight, LOW);
         digitalWrite(greenLight, HIGH);
         currentState = Green;
-        previousMillis = currentMillis;
+        previousMs = currentMs;
       }
       break;
   }
