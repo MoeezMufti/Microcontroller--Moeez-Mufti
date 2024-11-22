@@ -1,32 +1,65 @@
-int red=10; 
-int yellow=5; 
-int green=2; 
+#include <Wire.h>
 
-void setup() { 
-pinMode(green,OUTPUT);  
-pinMode(yellow,OUTPUT); 
-pinMode(red,OUTPUT); 
-} 
+// Pin delegations
+const int greenLight = 2;
+const int yellowLight = 3;
+const int redLight = 4;
 
-void loop() {  
-digitalWrite(red,HIGH); 
-delay(5000); 
-digitalWrite(red,LOW); 
-delay(250); //wait 0.25 seconds
+// State definitions
+enum TrafficState { Green, Yellow, Red };
+TrafficState currentState = Green;
 
-digitalWrite(green,HIGH);  
-delay(5000); 
-digitalWrite(green,LOW); 
-delay(250); //wait 0.25 seconds
+/*setting durations as constant so that they 
+don't change with with other condition*/
+unsigned long previousMillis = 0;
+const unsigned long greenDuration = 10000; //in ms
+const unsigned long yellowDuration = 3000; 
+const unsigned long redDuration = 5000;    
+
+void setup() {
+  // Set variables to their modes
+  pinMode(greenLight, OUTPUT);
+  pinMode(yellowLight, OUTPUT);
+  pinMode(redLight, OUTPUT);
   
-digitalWrite(yellow,HIGH);  
-delay(2000);
-digitalWrite(yellow,LOW);  
-delay(250); //wait 0.25 seconds
-  
-digitalWrite(red,HIGH); 
-delay(5000); 
-digitalWrite(red,LOW); 
-delay(250); //wait 0.25 seconds
+  // System always comes back to Green Light 
+  digitalWrite(greenLight, HIGH);
+  previousMillis = millis(); //tells how much ms has passed since beginning
+}
 
+void loop() {
+  unsigned long currentMillis = millis();
+
+  switch (currentState) {
+    case Green:
+      // Green light is on for 10s
+      if (currentMillis - previousMillis >= greenDuration) {
+        //how much time has passed from beginning to current
+        digitalWrite(greenLight, LOW);
+        digitalWrite(yellowLight, HIGH);
+        currentState = Yellow;
+        previousMillis = currentMillis;
+      }
+      break;
+
+    case Yellow:
+      // Yellow light is on for 3s
+      if (currentMillis - previousMillis >= yellowDuration) {
+        digitalWrite(yellowLight, LOW);
+        digitalWrite(redLight, HIGH);
+        currentState = Red;
+        previousMillis = currentMillis;
+      }
+      break;
+
+    case Red:
+      // Red light is on for 5s
+      if (currentMillis - previousMillis >= redDuration) {
+        digitalWrite(redLight, LOW);
+        digitalWrite(greenLight, HIGH);
+        currentState = Green;
+        previousMillis = currentMillis;
+      }
+      break;
+  }
 }
