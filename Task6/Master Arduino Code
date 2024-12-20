@@ -1,0 +1,91 @@
+//MASTER (Top Arduino) 
+const int d1Green = 2; 
+const int d1Yellow = 3; 
+const int d1Red = 4; 
+const int d2Red = 5; 
+const int d2Yellow = 6; 
+const int d2Green = 7; 
+const int pedRed = 9;           
+const int pedGreen = 10;        
+const int button = 11;         // Button input 
+const int buttonSignal = 8; // Output to D1 
+ 
+enum TrafficState { GREEN, YELLOW, RED }; 
+TrafficState currentState = GREEN;  // Start with green 
+unsigned long stateTimer = 0; 
+bool buttonPressed = false; 
+ 
+void setup() { 
+  pinMode(d1Green, OUTPUT); 
+  pinMode(d1Yellow, OUTPUT); 
+  pinMode(d1Red, OUTPUT); 
+  pinMode(d2Green, OUTPUT); 
+  pinMode(d2Yellow, OUTPUT); 
+  pinMode(d2Red, OUTPUT); 
+  pinMode(pedRed, OUTPUT); 
+  pinMode(pedGreen, OUTPUT); 
+  pinMode(button, INPUT_PULLUP); 
+  pinMode(buttonSignal, OUTPUT); 
+   
+  // Initial state: Both sets Green, Ped Red 
+  digitalWrite(d1Green, HIGH); 
+  digitalWrite(d2Green, HIGH); 
+  digitalWrite(d1Red, LOW); 
+  digitalWrite(d2Red, LOW); 
+  digitalWrite(pedRed, HIGH); 
+  digitalWrite(buttonSignal, LOW); 
+  stateTimer = millis(); 
+} 
+ 
+void loop() { 
+  // Check button press during GREEN state 
+  if (currentState == GREEN && !buttonPressed && digitalRead(button) == LOW) { 
+    buttonPressed = true; 
+    digitalWrite(buttonSignal, HIGH);  // Signal D1 
+    delay(50); // Debounce 
+  } 
+  
+  switch (currentState) { 
+    case GREEN: 
+      if (millis() - stateTimer >= (buttonPressed ? 5000 : 10000)) { 
+        // Transition to Yellow 
+        digitalWrite(d1Green, LOW); 
+        digitalWrite(d2Green, LOW); 
+        digitalWrite(d1Yellow, HIGH); 
+        digitalWrite(d2Yellow, HIGH); 
+        currentState = YELLOW; 
+        stateTimer = millis(); 
+      } 
+      break; 
+ 
+    case YELLOW: 
+      if (millis() - stateTimer >= 2000) { 
+        // Transition to Red 
+        digitalWrite(d1Yellow, LOW); 
+        digitalWrite(d2Yellow, LOW); 
+        digitalWrite(d1Red, HIGH); 
+        digitalWrite(d2Red, HIGH); 
+        digitalWrite(pedGreen, HIGH);  // Pedestrian can now cross 
+        digitalWrite(pedRed, LOW); 
+        currentState = RED; 
+        stateTimer = millis(); 
+      } 
+      break; 
+ 
+    case RED: 
+      if (millis() - stateTimer >= 10000) { 
+        // Back to Green 
+        digitalWrite(d1Red, LOW); 
+        digitalWrite(d2Red, LOW); 
+        digitalWrite(d1Green, HIGH); 
+        digitalWrite(d2Green, HIGH); 
+        digitalWrite(pedGreen, LOW);   // Stop pedestrian crossing 
+        digitalWrite(pedRed, HIGH); 
+        digitalWrite(buttonSignal, LOW);  // Reset signal to D1 
+        currentState = GREEN; 
+        buttonPressed = false; 
+        stateTimer = millis(); 
+      } 
+      break; 
+  } 
+}
