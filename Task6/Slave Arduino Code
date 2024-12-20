@@ -1,0 +1,55 @@
+//SLAVE (Bottom Arduino) 
+const int d3Green = 2; 
+const int d3Yellow = 3; 
+const int d3Red = 4; 
+const int buttonSignal = 8;  // Input from D2 
+ 
+enum TrafficState { GREEN, YELLOW, RED }; 
+TrafficState currentState = RED;  // Start with red 
+unsigned long stateTimer = 0; 
+ 
+void setup() { 
+  pinMode(d3Green, OUTPUT); 
+  pinMode(d3Yellow, OUTPUT); 
+  pinMode(d3Red, OUTPUT); 
+  pinMode(buttonSignal, INPUT);  // Input from D2 
+   
+  // Initial state: Red 
+  digitalWrite(d3Red, HIGH); 
+  digitalWrite(d3Green, LOW); 
+  stateTimer = millis(); 
+} 
+ 
+void loop() { 
+  // Read button signal from D2 
+  bool buttonActive = digitalRead(buttonSignal) == HIGH; 
+   
+  switch (currentState) { 
+    case RED: 
+      if (millis() - stateTimer >= (buttonActive ? 5000 : 10000)) { 
+        digitalWrite(d3Red, LOW); 
+        digitalWrite(d3Yellow, HIGH); 
+        currentState = YELLOW; 
+        stateTimer = millis(); 
+      } 
+      break; 
+ 
+    case YELLOW: 
+      if (millis() - stateTimer >= 2000) { 
+        digitalWrite(d3Yellow, LOW); 
+        digitalWrite(d3Green, HIGH); 
+        currentState = GREEN; 
+        stateTimer = millis(); 
+      } 
+      break; 
+ 
+    case GREEN: 
+      if (millis() - stateTimer >= 10000) { 
+digitalWrite(d3Green, LOW); 
+digitalWrite(d3Red, HIGH); 
+currentState = RED; 
+stateTimer = millis(); 
+} 
+break; 
+} 
+} 
